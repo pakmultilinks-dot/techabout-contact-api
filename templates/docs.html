@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact Inquiry API: TechAbout</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+  <h1>Contact Inquiry API</h1>
+  <p class="muted">TechAbout. Receives contact-form inquiries and stores them in SQLite.</p>
+
+  <h2>Submit an inquiry</h2>
+  <p><code>POST /api/inquiries</code> with a JSON body:</p>
+<pre>{
+  "name": "Ahmed Khan",
+  "email": "ahmed@example.com",
+  "message": "I would like a quote for a company website."
+}</pre>
+  <p>Validation: <code>name</code> required (max 100 chars), <code>email</code>
+  required and must be a valid address, <code>message</code> required
+  (max 2000 chars). Returns <code>201</code> with the stored inquiry, or
+  <code>400</code> with an <code>errors</code> list.</p>
+
+  <h2>List inquiries</h2>
+  <p><code>GET /api/inquiries</code> returns all inquiries, newest last:</p>
+<pre>{
+  "count": 2,
+  "inquiries": [
+    {"id": 1, "name": "Ahmed Khan", "email": "ahmed@example.com",
+     "message": "...", "created_at": "2026-10-05T10:00:00"},
+    {"id": 2, "...": "..."}
+  ]
+}</pre>
+  <p>Optional filters:</p>
+  <ul>
+    <li><code>GET /api/inquiries?date=2026-10-05</code> : one day</li>
+    <li><code>GET /api/inquiries?from=2026-10-01&amp;to=2026-10-05</code> : date range</li>
+  </ul>
+  <p>Bad date formats return <code>400</code> with an <code>errors</code> list.</p>
+
+  <h2>Fetch one inquiry</h2>
+  <p><code>GET /api/inquiries/1</code> returns the inquiry, or <code>404</code>
+  if it does not exist.</p>
+
+  <h2>Health check</h2>
+  <p><code>GET /api/health</code> returns <code>{"status": "ok"}</code>.</p>
+
+  <h2>Try it</h2>
+  <form id="tryform" class="card">
+    <label>Name <input id="fname" required maxlength="100"></label>
+    <label>Email <input id="femail" type="email" required></label>
+    <label>Message <textarea id="fmsg" required maxlength="2000" rows="4"></textarea></label>
+    <button type="submit">Send inquiry</button>
+    <pre id="out" class="muted">Response appears here.</pre>
+  </form>
+</div>
+<script>
+document.getElementById('tryform').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const out = document.getElementById('out');
+  try {
+    const r = await fetch('/api/inquiries', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        name: document.getElementById('fname').value,
+        email: document.getElementById('femail').value,
+        message: document.getElementById('fmsg').value
+      })
+    });
+    out.textContent = r.status + ' ' + JSON.stringify(await r.json(), null, 2);
+  } catch (err) { out.textContent = 'Error: ' + err; }
+});
+</script>
+</body>
+</html>
